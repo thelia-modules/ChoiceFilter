@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<config xmlns="http://thelia.net/schema/dic/config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://thelia.net/schema/dic/config http://thelia.net/schema/dic/config/thelia-1.0.xsd">
+
+    <loops>
+        <loop name="choice_filter" class="ChoiceFilter\Loop\ChoiceFilterLoop" />
+    </loops>
+
+    <hooks>
+        <hook id="choice_filter.edit" class="ChoiceFilter\Hook\ChoiceFilterHook">
+            <tag name="hook.event_listener" event="category.tab-content" type="back" method="onCategoryTabContent"/>
+            <tag name="hook.event_listener" event="template-edit.bottom" type="back" method="onTemplateEditBottom"/>
+            <tag name="hook.event_listener" event="category.edit-js" type="back" method="onCategoryEditJs"/>
+            <tag name="hook.event_listener" event="template.edit-js" type="back" method="onTemplateEditJs"/>
+            <argument type="service" id="request_stack" />
+        </hook>
+    </hooks>
+</config>

@@ -1,0 +1,113 @@
+<div class="row">
+    <div class="col-md-12 {if $template_id}general-block-decorator{/if}" id="module-choice-filter">
+        <div class="table-responsive">
+            <p class="title title-without-tabs">
+                {if $template_id}
+                    Position des filtres en front pour ce gabarit
+                {/if}
+                {if $category_id}
+                    Position des filtres en front pour cette category
+                {/if}
+            </p>
+
+            {flash type="choice-filter-success"}
+                <div class="alert alert-success">
+                    {$MESSAGE}
+                </div>
+            {/flash}
+            {if $messageInfo|count}
+            <div class="alert alert-info">
+                {foreach from=$messageInfo item=message}
+                    {$message}<br/>
+                {/foreach}
+            </div>
+            {/if}
+
+            {if !$enabled}
+                <div class="alert alert-info">
+                    La position des filtres est pour le moment celle par défaut
+                </div>
+            {/if}
+
+            <form action="{url path='/admin/module/choicefilter/save'}" method="POST">
+
+            {if $template_id}
+                <input type="hidden" name="ChoiceFilter[template_id]" value="{$template_id}" />
+            {/if}
+
+            {if $category_id}
+                <input type="hidden" name="ChoiceFilter[category_id]" value="{$category_id}" />
+            {/if}
+
+            {if !$enabled}
+                <div class="text-center">
+                    <a href="#" class="btn btn-primary js-action-enable">Personnaliser la configuration des filtres pour cette catégorie</a>
+                    <br/>
+                    <br/>
+                </div>
+            {/if}
+
+            <table class="table table-striped table-condensed table-left-aligned {if !$enabled}disabled{/if}">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Titre</th>
+                    <th>Visible</th>
+                    <th>Position</th>
+                </tr>
+                </thead>
+                <tbody>
+                {foreach from=$filters key=key item=filter}
+                <tr>
+                    <td>
+                        <input type="hidden" name="ChoiceFilter[filter][{$key}][id]" value="{$filter.Id}" />
+                        {$filter.Id}
+                    </td>
+                    <td>
+                        <input type="hidden" name="ChoiceFilter[filter][{$key}][type]" value="{$filter.Type}" />
+                        {$filter.Type}
+                    </td>
+                    <td>
+                        {$filter.Title}
+                    </td>
+                    <td>
+                        <select name="ChoiceFilter[filter][{$key}][visible]">
+                            <option {if $filter.Visible}selected{/if} value="1">Oui</option>
+                            <option {if !$filter.Visible}selected{/if} value="0">Non</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="1" min="0" name="ChoiceFilter[filter][{$key}][position]" value="{$filter.Position}" />
+                    </td>
+                </tr>
+                {/foreach}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="99" class="text-center">
+                            <button type="submit" class="btn btn-primary">Sauvgarder</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            </form>
+
+            {if $enabled}
+                <form action="{url path='/admin/module/choicefilter/clear'}" method="POST" class="text-center">
+                    {if $template_id}
+                        <input type="hidden" name="ChoiceFilter[template_id]" value="{$template_id}" />
+                    {/if}
+
+                    {if $category_id}
+                        <input type="hidden" name="ChoiceFilter[category_id]" value="{$category_id}" />
+                    {/if}
+
+                    <button type="submit" class="btn btn-danger">Réinitialiser les valeurs par défaut</button>
+                    <br/>
+                    <br/>
+                </form>
+            {/if}
+        </div>
+    </div>
+</div>

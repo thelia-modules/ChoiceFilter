@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<routes xmlns="http://symfony.com/schema/routing"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/routing http://symfony.com/schema/routing/routing-1.0.xsd">
+
+    <route id="choicefilter.save" path="/admin/module/choicefilter/save">
+        <default key="_controller">ChoiceFilter\Controller\ChoiceFilterController::saveAction</default>
+    </route>
+
+    <route id="choicefilter.clear" path="/admin/module/choicefilter/clear">
+        <default key="_controller">ChoiceFilter\Controller\ChoiceFilterController::clearAction</default>
+    </route>
+
+</routes>

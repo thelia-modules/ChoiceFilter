@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="http://thelia.net/schema/dic/module"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_2.xsd">
+    <fullnamespace>ChoiceFilter\ChoiceFilter</fullnamespace>
+    <descriptive locale="en_US">
+        <title>This module allows the management of filters in front by template and category</title>
+    </descriptive>
+    <descriptive locale="fr_FR">
+        <title>Ce module permet la gestion des filtres en front par gabarit et catégorie</title>
+    </descriptive>
+    <languages>
+        <language>en_US</language>
+        <language>fr_FR</language>
+    </languages>
+    <version>1.0.0</version>
+    <authors>
+        <author>
+            <name>Gilles Bourgeat</name>
+            <email>gbourgeat@openstudio.fr</email>
+        </author>
+    </authors>
+    <type>classic</type>
+    <thelia>2.2.0</thelia>
+    <stability>other</stability>
+    <mandatory>0</mandatory>
+    <hidden>0</hidden>
+</module>

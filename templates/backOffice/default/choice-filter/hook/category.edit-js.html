@@ -1,0 +1,27 @@
+<script>
+    (function($, $module){
+        $module.find('table.disabled').find('input, select, button').attr('disabled', true);
+
+        $module.on('click', '.js-action-enable', function(event){
+            event.preventDefault();
+            $(this).parent().remove();
+            $module.find('table.disabled').find('input, select, button').attr('disabled', false);
+        });
+
+        $module.on('submit', 'form', function(event){
+            event.preventDefault();
+
+            var data = $(this).serialize();
+
+            $.ajax({
+                url: $(this).attr('action'),
+                method: $(this).attr('method'),
+                data: data
+            })
+                .done(function(html) {
+                    $module.html($('#module-choice-filter', html).html());
+                });
+        });
+
+    }(jQuery, jQuery('#module-choice-filter')))
+</script>
