@@ -1,6 +1,6 @@
 # Choice Filter
 
-This module allows the management of filters in front
+This module allows the management of filters in front by template and category
 
 ## Installation
 
