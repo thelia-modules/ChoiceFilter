@@ -71,7 +71,7 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
 
             $templateIdFind = null;
             $categoryIdFind = null;
-            $choiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $categoryIdFind, $templateIdFind);
+            $choiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateIdFind, $categoryId);
 
             if ($templateIdFind === null) {
                 $features = new ObjectCollection();
@@ -80,18 +80,16 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
                 $choiceFilters = new ObjectCollection();
             } else {
                 $features = ChoiceFilterQuery::findFeaturesByTemplateId(
-                    $categoryIdFind
+                    $templateIdFind
                 );
                 $attributes = ChoiceFilterQuery::findAttributesByTemplateId(
-                    $categoryIdFind
+                    $templateIdFind
                 );
                 $others = ChoiceFilterOtherQuery::findOther();
             }
 
             $filters = Util::merge($choiceFilters, $features, $attributes, $others);
-        }
-
-        if (null !== $templateId) {
+        } elseif (null !== $templateId) {
             $features = ChoiceFilterQuery::findFeaturesByTemplateId($templateId);
             $attributes = ChoiceFilterQuery::findAttributesByTemplateId($templateId);
             $others = ChoiceFilterOtherQuery::findOther();
