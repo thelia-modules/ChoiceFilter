@@ -19,7 +19,9 @@ composer require thelia/choice-filter-module:~0.1.0
 
 ## Usage
 
-Explain here how to use your module, how to configure it, etc.
+You can choose the position of the filters
+- When you edit a template
+- When you edit a category
 
 ## Loop
 
