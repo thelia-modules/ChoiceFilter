@@ -69,21 +69,21 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
         if (null !== $categoryId) {
             $category = CategoryQuery::create()->findPk($categoryId);
 
-            $templateId = null;
-            $categoryId = null;
-            $choiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateId, $categoryId);
+            $templateIdFind = null;
+            $categoryIdFind = null;
+            $choiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $categoryIdFind, $templateIdFind);
 
-            if ($templateId === null) {
+            if ($templateIdFind === null) {
                 $features = new ObjectCollection();
                 $attributes = new ObjectCollection();
                 $others = new ObjectCollection();
                 $choiceFilters = new ObjectCollection();
             } else {
                 $features = ChoiceFilterQuery::findFeaturesByTemplateId(
-                    $templateId
+                    $categoryIdFind
                 );
                 $attributes = ChoiceFilterQuery::findAttributesByTemplateId(
-                    $templateId
+                    $categoryIdFind
                 );
                 $others = ChoiceFilterOtherQuery::findOther();
             }
