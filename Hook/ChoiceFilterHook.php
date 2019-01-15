@@ -137,10 +137,6 @@ class ChoiceFilterHook extends BaseHook
 
         $locale = $session->getAdminEditionLang()->getLocale();
 
-        if ($locale === 'en_US') {
-            return [$locale];
-        }
-
-        return ['en_US', $locale];
+        return [$locale];
     }
 }
