@@ -33,7 +33,7 @@ class ChoiceFilterController extends BaseAdminController
 
         } elseif (!empty($data['category_id'])) {
             ChoiceFilterQuery::create()
-                ->filterByTemplateId((int) $data['category_id'])
+                ->filterByCategoryId((int) $data['category_id'])
                 ->delete();
 
             $choiceFilterBase = (new ChoiceFilter())
