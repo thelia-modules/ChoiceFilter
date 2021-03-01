@@ -1,12 +1,12 @@
 <div class="row">
-    <div class="col-md-12 {if $template_id}general-block-decorator{/if}" id="module-choice-filter">
+    <div class="col-md-12 {if isset($template_id)}general-block-decorator{/if}" id="module-choice-filter">
         <div class="table-responsive">
             <p class="title title-without-tabs">
-                {if $template_id}
-                    Position des filtres en front pour ce gabarit
+                {if isset($template_id)}
+                    {intl l="Position of the filters in front for this template" d="choicefilter.bo.default"}
                 {/if}
-                {if $category_id}
-                    Position des filtres en front pour cette category
+                {if isset($category_id)}
+                    {intl l="Position of the filters in front for this category"  d="choicefilter.bo.default"}
                 {/if}
             </p>
 
@@ -15,7 +15,7 @@
                     {$MESSAGE}
                 </div>
             {/flash}
-            {if $messageInfo|count}
+            {if $messageInfo|default:[]|count}
             <div class="alert alert-info">
                 {foreach from=$messageInfo item=message}
                     {$message}<br/>
@@ -25,23 +25,25 @@
 
             {if !$enabled}
                 <div class="alert alert-info">
-                    La position des filtres est pour le moment celle par défaut
+                    {intl l="The position of the filters is for now the default one."  d="choicefilter.bo.default"}
                 </div>
             {/if}
 
             <form action="{url path='/admin/module/choicefilter/save'}" method="POST">
 
-            {if $template_id}
+            {if isset($template_id)}
                 <input type="hidden" name="ChoiceFilter[template_id]" value="{$template_id}" />
             {/if}
 
-            {if $category_id}
+            {if isset($category_id)}
                 <input type="hidden" name="ChoiceFilter[category_id]" value="{$category_id}" />
             {/if}
 
             {if !$enabled}
                 <div class="text-center">
-                    <a href="#" class="btn btn-primary js-action-enable">Personnaliser la configuration des filtres pour cette catégorie</a>
+                    <a href="#" class="btn btn-primary js-action-enable">
+                        {intl l="Customize filter configuration for this category"  d="choicefilter.bo.default"}
+                    </a>
                     <br/>
                     <br/>
                 </div>
@@ -50,11 +52,11 @@
             <table class="table table-striped table-condensed table-left-aligned {if !$enabled}disabled{/if}">
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>Titre</th>
-                    <th>Visible</th>
-                    <th>Position</th>
+                    <th>{intl l="ID"  d="choicefilter.bo.default"}</th>
+                    <th>{intl l="Type"  d="choicefilter.bo.default"}</th>
+                    <th>{intl l="Title"  d="choicefilter.bo.default"}</th>
+                    <th>{intl l="Visible"  d="choicefilter.bo.default"}</th>
+                    <th>{intl l="Position"  d="choicefilter.bo.default"}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -73,8 +75,8 @@
                     </td>
                     <td>
                         <select name="ChoiceFilter[filter][{$key}][visible]">
-                            <option {if $filter.Visible}selected{/if} value="1">Oui</option>
-                            <option {if !$filter.Visible}selected{/if} value="0">Non</option>
+                            <option {if $filter.Visible}selected{/if} value="1">{intl l="Yes"  d="choicefilter.bo.default"}</option>
+                            <option {if !$filter.Visible}selected{/if} value="0">{intl l="No"  d="choicefilter.bo.default"}</option>
                         </select>
                     </td>
                     <td>
@@ -86,7 +88,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="99" class="text-center">
-                            <button type="submit" class="btn btn-primary">Sauvgarder</button>
+                            <button type="submit" class="btn btn-primary">{intl l="Save"  d="choicefilter.bo.default"}</button>
                         </td>
                     </tr>
                 </tfoot>
@@ -95,15 +97,17 @@
 
             {if $enabled}
                 <form action="{url path='/admin/module/choicefilter/clear'}" method="POST" class="text-center">
-                    {if $template_id}
+                    {if isset($template_id)}
                         <input type="hidden" name="ChoiceFilter[template_id]" value="{$template_id}" />
                     {/if}
 
-                    {if $category_id}
+                    {if isset($category_id)}
                         <input type="hidden" name="ChoiceFilter[category_id]" value="{$category_id}" />
                     {/if}
 
-                    <button type="submit" class="btn btn-danger">Réinitialiser les valeurs par défaut</button>
+                    <button type="submit" class="btn btn-danger">
+                        {intl l="Reset default values"  d="choicefilter.bo.default"}
+                    </button>
                     <br/>
                     <br/>
                 </form>
