@@ -3,10 +3,10 @@
         <div class="table-responsive">
             <p class="title title-without-tabs">
                 {if $template_id}
-                    Position des filtres en front pour ce gabarit
+                    Configuration des filtres pour toutes les catégories utilisant par défaut ce gabarit
                 {/if}
                 {if $category_id}
-                    Position des filtres en front pour cette category
+                    Configuration des filtres pour cette categorie
                 {/if}
             </p>
 
@@ -15,7 +15,7 @@
                     {$MESSAGE}
                 </div>
             {/flash}
-            {if $messageInfo|count}
+            {if $messageInfo && $messageInfo|@count}
             <div class="alert alert-info">
                 {foreach from=$messageInfo item=message}
                     {$message}<br/>
@@ -41,7 +41,7 @@
 
             {if !$enabled}
                 <div class="text-center">
-                    <a href="#" class="btn btn-primary js-action-enable">Personnaliser la configuration des filtres pour cette catégorie</a>
+                    <a href="#" class="btn btn-primary js-action-enable">Personnaliser la configuration{if $template_id} globale{/if} des filtres{if $category_id} pour cette catégorie{/if}</a>
                     <br/>
                     <br/>
                 </div>
@@ -86,7 +86,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="99" class="text-center">
-                            <button type="submit" class="btn btn-primary">Sauvgarder</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer la configuration</button>
                         </td>
                     </tr>
                 </tfoot>
