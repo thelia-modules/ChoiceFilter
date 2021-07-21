@@ -1,6 +1,6 @@
 {
   "name": "thelia/choice-filter-module",
-  "description": "Allows the management of filters in front by template and category"
+  "description": "Allows the management of filters in front by template and category",
   "license": "LGPL-3.0+",
   "type": "thelia-module",
   "require": {
