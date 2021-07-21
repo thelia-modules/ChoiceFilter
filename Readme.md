@@ -14,7 +14,7 @@ This module allows the management of filters in front by template and category
 Add it in your main thelia composer.json file
 
 ```
-composer require thelia/choice-filter-module:~0.1.0
+composer require thelia/choice-filter-module:~2.0.0
 ```
 
 ## Usage
