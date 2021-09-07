@@ -161,9 +161,9 @@ class ChoiceFilter extends BaseApiModel
     /**
      * @param int $values
      */
-    public function setValues(?int $values): ChoiceFilter
+    public function setValues(?array $values): ChoiceFilter
     {
-        $this->$values = $values;
+        $this->values = $values;
 
         return $this;
     }
