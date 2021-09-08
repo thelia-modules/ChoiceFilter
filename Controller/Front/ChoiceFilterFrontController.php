@@ -2,6 +2,7 @@
 
 namespace ChoiceFilter\Controller\Front;
 
+use ChoiceFilter\Model\Api\CategoryChoiceFilter;
 use ChoiceFilter\Model\ChoiceFilter;
 use ChoiceFilter\Model\ChoiceFilterOtherQuery;
 use ChoiceFilter\Model\ChoiceFilterQuery;
@@ -11,6 +12,7 @@ use OpenApi\Controller\Front\BaseFrontOpenApiController;
 use OpenApi\Model\Api\ModelFactory;
 use OpenApi\Service\OpenApiService;
 use Propel\Runtime\Collection\ObjectCollection;
+use Propel\Runtime\Propel;
 use Symfony\Component\Routing\Annotation\Route;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Model\CategoryQuery;
@@ -29,13 +31,6 @@ class ChoiceFilterFrontController extends BaseFrontOpenApiController
      *     tags={"ChoiceFilter"},
      *     summary="get filters",
      *     @OA\Parameter(
-     *          name="template_id",
-     *          in="query",
-     *          @OA\Schema(
-     *              type="integer"
-     *          )
-     *     ),
-     *     @OA\Parameter(
      *          name="category_id",
      *          in="query",
      *          @OA\Schema(
@@ -52,7 +47,37 @@ class ChoiceFilterFrontController extends BaseFrontOpenApiController
      *     @OA\Response(
      *          response="200",
      *          description="Success",
-     *          @OA\JsonContent(ref="#/components/schemas/ChoiceFilter")
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="categories",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      ref="#/components/schemas/CategoryChoiceFilter"
+     *                  )
+     *              ),
+     *              @OA\Property(
+     *                  property="brands",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      ref="#/components/schemas/BrandChoiceFilter"
+     *                  )
+     *              ),
+     *              @OA\Property(
+     *                  property="features",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      ref="#/components/schemas/ChoiceFilter"
+     *                  )
+     *              ),
+     *              @OA\Property(
+     *                  property="attributes",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      ref="#/components/schemas/ChoiceFilter"
+     *                  )
+     *              )
+     *          )
      *     ),
      *     @OA\Response(
      *          response="400",
@@ -65,70 +90,113 @@ class ChoiceFilterFrontController extends BaseFrontOpenApiController
         Request $request,
         ModelFactory $modelFactory
     ) {
-        $templateId = $request->get('template_id');
+        $locale = $request->get('locale', $request->getSession()->getLang()->getLocale());
+
         $categoryId = $request->get('category_id');
         $visible = $request->get('visible', true);
 
-        if (null === $templateId && null === $categoryId) {
-            throw new \Exception('The argument template_id or category_id is required');
+        $features = new ObjectCollection();
+        $attributes = new ObjectCollection();
+        $others = new ObjectCollection();
+
+        $category = CategoryQuery::create()->findPk($categoryId);
+
+        $categoryChoiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateIdFind);
+
+        if (null !== $templateIdFind) {
+            $features = ChoiceFilterQuery::findFeaturesByTemplateId(
+                $templateIdFind,
+                [$locale]
+            );
+            $attributes = ChoiceFilterQuery::findAttributesByTemplateId(
+                $templateIdFind,
+                [$locale]
+            );
+            $others = ChoiceFilterOtherQuery::findOther([$locale]);
         }
 
-        if (null !== $templateId && null !== $categoryId) {
-            throw new \Exception('The argument template_id or category_id can not be set together');
-        }
-
-        if (null !== $categoryId) {
-            $category = CategoryQuery::create()->findPk($categoryId);
-
-            $templateIdFind = null;
-            $choiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateIdFind, $categoryId);
-
-            if (null === $templateIdFind) {
-                $features = new ObjectCollection();
-                $attributes = new ObjectCollection();
-                $others = new ObjectCollection();
-                $choiceFilters = new ObjectCollection();
-            } else {
-                $features = ChoiceFilterQuery::findFeaturesByTemplateId(
-                    $templateIdFind
-                );
-                $attributes = ChoiceFilterQuery::findAttributesByTemplateId(
-                    $templateIdFind
-                );
-                $others = ChoiceFilterOtherQuery::findOther();
-            }
-
-            $filters = Util::merge($choiceFilters, $features, $attributes, $others);
-        } elseif (null !== $templateId) {
-            $features = ChoiceFilterQuery::findFeaturesByTemplateId($templateId);
-            $attributes = ChoiceFilterQuery::findAttributesByTemplateId($templateId);
-            $others = ChoiceFilterOtherQuery::findOther();
-
-            /** @var ChoiceFilter[] $choiceFilters */
-            $choiceFilters = ChoiceFilterQuery::create()
-                ->filterByTemplateId($templateId)
-                ->orderByPosition()
-                ->find();
-
-            $filters = Util::merge($choiceFilters, $features, $attributes, $others);
-        }
+        $filters = Util::merge($categoryChoiceFilters, $features, $attributes, $others);
 
         if (Type\BooleanOrBothType::ANY !== $visible) {
             $visible = $visible ? 1 : 0;
-            foreach ($filters as $key => $filter) {
-                if ($filter['Visible'] != $visible) {
-                    unset($filters[$key]);
-                }
+            $filters = array_filter($filters, function ($filter) use ($visible) {return $filter['Visible'] == $visible;});
+        }
+
+        $results = [];
+
+        $attributeResults = array_map(
+            fn ($filter) => $modelFactory->buildModel('ChoiceFilter', $filter, $locale),
+            array_filter($filters, function ($filter) {return $filter['Type'] === "attribute";})
+        );
+
+        if (!empty($attributeResults)) {
+            $results['attributes'] = $attributeResults;
+        }
+
+        $featureResults = array_map(
+            fn ($filter) => $modelFactory->buildModel('ChoiceFilter', $filter, $locale),
+            array_filter($filters, function ($filter) {return $filter['Type'] === "feature";})
+        );
+
+        if (!empty($attributeResults)) {
+            $results['features'] = $featureResults;
+        }
+
+        $categoryIds = [$categoryId];
+        $needCategories = !empty(array_filter($filters, function ($filter) {return $filter['Type'] === "category";}));
+        if ($needCategories) {
+            $con = Propel::getConnection();
+            $stmt = $con->prepare("
+                SELECT category.*, ci18n.title as title FROM category
+                LEFT JOIN category c_parent ON category.parent = c_parent.id
+                LEFT JOIN category c_parent_2 ON c_parent.parent = c_parent_2.id
+                LEFT JOIN category c_parent_3 ON c_parent_2.parent = c_parent_3.id
+                LEFT JOIN category c_parent_4 ON c_parent_3.parent = c_parent_4.id
+                LEFT JOIN category_i18n ci18n on category.id = ci18n.id AND ci18n.locale = :locale
+                WHERE category.id = :categoryId OR c_parent.id = :categoryId OR c_parent_2.id = :categoryId OR c_parent_3.id = :categoryId OR c_parent_4.id = :categoryId
+            ");
+            $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
+            $stmt->bindValue(':categoryId', $categoryId, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $categoryResults = array_map(
+                fn ($category) => $modelFactory->buildModel('CategoryChoiceFilter', $category, $locale),
+                $stmt->fetchAll(\PDO::FETCH_ASSOC)
+            );
+
+            if (!empty($categoryResults)) {
+                $results['categories'] = $categoryResults;
+            }
+
+            $categoryIds = array_map(
+                fn (CategoryChoiceFilter $categoryChoiceFilter) => $categoryChoiceFilter->getId(),
+                $categoryResults
+            );
+        }
+
+        $needBrands = !empty(array_filter($filters, function ($filter) {return $filter['Type'] === "brand";}));
+        if ($needBrands) {
+            $con = Propel::getConnection();
+            $stmt = $con->prepare("
+                SELECT DISTINCT brand.id as id, brand.*, bi18n.* FROM brand
+                INNER JOIN product p on brand.id = p.brand_id
+                LEFT JOIN brand_i18n bi18n on brand.id = bi18n.id AND bi18n.locale = :locale
+                INNER JOIN product_category ON p.id = product_category.product_id AND product_category.category_id IN (:categoryIds)
+            ");
+            $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
+            $stmt->bindValue(':categoryIds', implode(",", $categoryIds), \PDO::PARAM_STR);
+            $stmt->execute();
+
+            $brandResults = array_map(
+                fn ($brand) => $modelFactory->buildModel('BrandChoiceFilter', $brand, $locale),
+                $stmt->fetchAll(\PDO::FETCH_ASSOC)
+            );
+
+            if (!empty($brandResults)) {
+                $results['brands'] = $brandResults;
             }
         }
 
-        if (empty($filters)) {
-            return OpenApiService::jsonResponse([], 404);
-        }
-
-        return OpenApiService::jsonResponse(array_map(
-            fn ($filters) => $modelFactory->buildModel('ChoiceFilter', $filters, $request->get('locale')),
-        $filters
-        ));
+        return OpenApiService::jsonResponse($results);
     }
 }

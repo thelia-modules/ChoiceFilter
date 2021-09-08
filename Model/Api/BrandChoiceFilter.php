@@ -5,16 +5,20 @@ namespace ChoiceFilter\Model\Api;
 use OpenApi\Annotations as OA;
 use OpenApi\Constraint as Constraint;
 use OpenApi\Model\Api\BaseApiModel;
+use Thelia\Model\AttributeAv;
+use Thelia\Model\AttributeAvQuery;
+use Thelia\Model\FeatureAv;
+use Thelia\Model\FeatureAvQuery;
 
 /**
- * Class ChoiceFilterValue.
+ * Class BrandChoiceFilter.
  *
  * @OA\Schema(
- *     schema="ChoiceFilterValue",
- *     title="ChoiceFilterValue",
+ *     schema="BrandChoiceFilter",
+ *     title="BrandChoiceFilter",
  * )
  */
-class ChoiceFilterValue extends BaseApiModel
+class BrandChoiceFilter extends BaseApiModel
 {
     /**
      * @var int
@@ -34,12 +38,21 @@ class ChoiceFilterValue extends BaseApiModel
     protected $title;
 
     /**
+     * @var bool
+     * @OA\Property(
+     *     type="boolean",
+     * )
+     */
+    protected $visible = true;
+
+    /**
      * @var int
      * @OA\Property(
      *     type="integer",
      * )
      */
     protected $position;
+
 
     /**
      * @return int
@@ -49,21 +62,42 @@ class ChoiceFilterValue extends BaseApiModel
         return $this->id;
     }
 
-    public function setId(int $id): ChoiceFilterValue
+    public function setId(int $id): BrandChoiceFilter
     {
         $this->id = $id;
 
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function setTitle(string $title): ChoiceFilterValue
+    /**
+     * @param string $title
+     */
+    public function setTitle(?string $title): BrandChoiceFilter
     {
         $this->title = $title;
+
+        return $this;
+    }
+
+    public function isVisible(): bool
+    {
+        return $this->visible;
+    }
+
+    /**
+     * @param bool $visible
+     */
+    public function setVisible(?bool $visible = true): BrandChoiceFilter
+    {
+        $this->visible = $visible;
 
         return $this;
     }
@@ -79,7 +113,7 @@ class ChoiceFilterValue extends BaseApiModel
     /**
      * @param int $position
      */
-    public function setPosition(?int $position): ChoiceFilterValue
+    public function setPosition(?int $position): BrandChoiceFilter
     {
         $this->position = $position;
 

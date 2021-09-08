@@ -5,6 +5,10 @@ namespace ChoiceFilter\Model\Api;
 use OpenApi\Annotations as OA;
 use OpenApi\Constraint as Constraint;
 use OpenApi\Model\Api\BaseApiModel;
+use Thelia\Model\AttributeAv;
+use Thelia\Model\AttributeAvQuery;
+use Thelia\Model\FeatureAv;
+use Thelia\Model\FeatureAvQuery;
 
 /**
  * Class ChoiceFilter.
@@ -33,12 +37,6 @@ class ChoiceFilter extends BaseApiModel
      */
     protected $title;
 
-    /**
-     * @var string
-     * @OA\Property(
-     *     type="string",
-     * )
-     */
     protected $type;
 
     /**
@@ -171,5 +169,58 @@ class ChoiceFilter extends BaseApiModel
     protected function getTheliaModel($propelModelName = null)
     {
         return parent::getTheliaModel(\ChoiceFilter\Model\ChoiceFilter::class);
+    }
+
+    public function createOrUpdateFromData($data, $locale = null): void
+    {
+        parent::createOrUpdateFromData($data, $locale);
+
+        $values = [];
+
+        $modelFactory = $this->modelFactory;
+        if ($this->type === "feature") {
+            $values = array_map(
+                function (FeatureAv $featureAv) use ($modelFactory)  {
+                    return $modelFactory->buildModel('ChoiceFilterValue',
+                        [
+                            'id' => $featureAv->getId(),
+                            'title' => $featureAv->getTitle(),
+                            'position' => $featureAv->getPosition()
+                        ]
+                    );
+                },
+                iterator_to_array(
+                    FeatureAvQuery::create()
+                        ->filterByFeatureId($this->getId())
+                        ->useFeatureAvI18nQuery()
+                            ->filterByLocale($locale)
+                        ->endUse()
+                    ->find()
+                )
+            );
+        }
+        if ($this->type === "attribute") {
+            $values = array_map(
+                function (AttributeAv $attributeAv) use ($modelFactory)  {
+                    return $modelFactory->buildModel('ChoiceFilterValue',
+                        [
+                            'id' => $attributeAv->getId(),
+                            'title' => $attributeAv->getTitle(),
+                            'position' => $attributeAv->getPosition()
+                        ]
+                    );
+                },
+                iterator_to_array(
+                    AttributeAvQuery::create()
+                        ->filterByAttributeId($this->getId())
+                        ->useAttributeAvI18nQuery()
+                            ->filterByLocale($locale)
+                        ->endUse()
+                    ->find()
+                )
+            );
+        }
+
+        $this->setValues($values);
     }
 }
