@@ -32,7 +32,7 @@ use Thelia\Type;
  */
 class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
 {
-    protected function getArgDefinitions()
+    protected function getArgDefinitions(): \Thelia\Core\Template\Loop\Argument\ArgumentCollection
     {
         return new ArgumentCollection(
             Argument::createIntTypeArgument('template_id'),
@@ -130,7 +130,7 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
      *
      * @return LoopResult
      */
-    public function parseResults(LoopResult $loopResult)
+    public function parseResults(LoopResult $loopResult): LoopResult
     {
         /** @var ChoiceFilter $choiceFilter */
         foreach ($loopResult->getResultDataCollection() as $choiceFilter) {
