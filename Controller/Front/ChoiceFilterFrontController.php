@@ -1,95 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace ChoiceFilter\Controller\Front;
 
-use ChoiceFilter\Model\Api\CategoryChoiceFilter;
-use ChoiceFilter\Model\ChoiceFilter;
+use ChoiceFilter\Controller\Front\Support\LegacyChoiceFilterSerializer;
 use ChoiceFilter\Model\ChoiceFilterOtherQuery;
 use ChoiceFilter\Model\ChoiceFilterQuery;
 use ChoiceFilter\Util;
-use OpenApi\Annotations as OA;
-use OpenApi\Controller\Front\BaseFrontOpenApiController;
-use OpenApi\Model\Api\ModelFactory;
-use OpenApi\Service\OpenApiService;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
+use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Model\CategoryQuery;
 use Thelia\Type;
 
 /**
- * @Route("/open_api/choice_filters", name="choicefilters")
+ * Backwards-compatibility shim for the legacy `/open_api/choice_filters`
+ * endpoint still consumed by integrations relying on the pre-AP4 contract.
+ *
+ * The canonical API will live under `/api/front/...` (AP 4.3) once
+ * native resources are introduced.
  */
-class ChoiceFilterFrontController extends BaseFrontOpenApiController
+#[Route('/open_api/choice_filters', name: 'choicefilter_legacy_choice_filters_front')]
+final class ChoiceFilterFrontController extends BaseFrontController
 {
-    /**
-     * @Route("", name="_get", methods="GET")
-     *
-     * @OA\Get(
-     *     path="/choice_filters",
-     *     tags={"ChoiceFilter"},
-     *     summary="get filters",
-     *     @OA\Parameter(
-     *          name="category_id",
-     *          in="query",
-     *          @OA\Schema(
-     *              type="integer"
-     *          )
-     *     ),
-     *     @OA\Parameter(
-     *          name="visible",
-     *          in="query",
-     *          @OA\Schema(
-     *              type="boolean"
-     *          )
-     *     ),
-     *     @OA\Response(
-     *          response="200",
-     *          description="Success",
-     *          @OA\JsonContent(
-     *              type="object",
-     *              @OA\Property(
-     *                  property="categories",
-     *                  type="array",
-     *                  @OA\Items(
-     *                      ref="#/components/schemas/CategoryChoiceFilter"
-     *                  )
-     *              ),
-     *              @OA\Property(
-     *                  property="brands",
-     *                  type="array",
-     *                  @OA\Items(
-     *                      ref="#/components/schemas/BrandChoiceFilter"
-     *                  )
-     *              ),
-     *              @OA\Property(
-     *                  property="features",
-     *                  type="array",
-     *                  @OA\Items(
-     *                      ref="#/components/schemas/ChoiceFilter"
-     *                  )
-     *              ),
-     *              @OA\Property(
-     *                  property="attributes",
-     *                  type="array",
-     *                  @OA\Items(
-     *                      ref="#/components/schemas/ChoiceFilter"
-     *                  )
-     *              )
-     *          )
-     *     ),
-     *     @OA\Response(
-     *          response="400",
-     *          description="Bad request",
-     *          @OA\JsonContent(ref="#/components/schemas/Error")
-     *     )
-     * )
-     */
-    public function getChoiceFilters(
-        Request $request,
-        ModelFactory $modelFactory
-    ) {
+    #[Route('', name: '_get', methods: ['GET'])]
+    public function getChoiceFilters(Request $request): JsonResponse
+    {
         $locale = $request->get('locale', $request->getSession()->getLang()->getLocale());
 
         $categoryId = $request->get('category_id');
@@ -98,10 +48,14 @@ class ChoiceFilterFrontController extends BaseFrontOpenApiController
         $features = new ObjectCollection();
         $attributes = new ObjectCollection();
         $others = new ObjectCollection();
+        $templateIdFind = null;
 
         $category = CategoryQuery::create()->findPk($categoryId);
+        $categoryChoiceFilters = new ObjectCollection();
 
-        $categoryChoiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateIdFind);
+        if (null !== $category) {
+            $categoryChoiceFilters = ChoiceFilterQuery::findChoiceFilterByCategory($category, $templateIdFind);
+        }
 
         if (null !== $templateIdFind) {
             $features = ChoiceFilterQuery::findFeaturesByTemplateId(
@@ -118,85 +72,127 @@ class ChoiceFilterFrontController extends BaseFrontOpenApiController
         $filters = Util::merge($categoryChoiceFilters, $features, $attributes, $others);
 
         if (Type\BooleanOrBothType::ANY !== $visible) {
-            $visible = $visible ? 1 : 0;
-            $filters = array_filter($filters, function ($filter) use ($visible) {return $filter['Visible'] == $visible;});
+            $visibleInt = $visible ? 1 : 0;
+            $filters = array_filter(
+                $filters,
+                static fn (array $filter): bool => (int) ($filter['Visible'] ?? 0) === $visibleInt,
+            );
         }
 
         $results = [];
 
-        $attributeResults = array_map(
-            fn ($filter) => $modelFactory->buildModel('ChoiceFilter', $filter, $locale),
-            array_filter($filters, function ($filter) {return $filter['Type'] === "attribute";})
+        $attributeFilters = array_filter(
+            $filters,
+            static fn (array $filter): bool => 'attribute' === ($filter['Type'] ?? null),
         );
-
-        if (!empty($attributeResults)) {
-            $results['attributes'] = $attributeResults;
+        if ([] !== $attributeFilters) {
+            $results['attributes'] = array_values(array_map(
+                static fn (array $filter): array => LegacyChoiceFilterSerializer::filterToArray($filter, $locale),
+                $attributeFilters,
+            ));
         }
 
-        $featureResults = array_map(
-            fn ($filter) => $modelFactory->buildModel('ChoiceFilter', $filter, $locale),
-            array_filter($filters, function ($filter) {return $filter['Type'] === "feature";})
+        $featureFilters = array_filter(
+            $filters,
+            static fn (array $filter): bool => 'feature' === ($filter['Type'] ?? null),
         );
-
-        if (!empty($attributeResults)) {
-            $results['features'] = $featureResults;
+        if ([] !== $featureFilters) {
+            $results['features'] = array_values(array_map(
+                static fn (array $filter): array => LegacyChoiceFilterSerializer::filterToArray($filter, $locale),
+                $featureFilters,
+            ));
         }
 
-        $categoryIds = [$categoryId];
-        $needCategories = !empty(array_filter($filters, function ($filter) {return $filter['Type'] === "category";}));
+        $categoryIds = [(int) $categoryId];
+        $needCategories = [] !== array_filter(
+            $filters,
+            static fn (array $filter): bool => 'category' === ($filter['Type'] ?? null),
+        );
+
         if ($needCategories) {
-            $con = Propel::getConnection();
-            $stmt = $con->prepare("
-                SELECT category.*, ci18n.title as title FROM category
-                LEFT JOIN category c_parent ON category.parent = c_parent.id
-                LEFT JOIN category c_parent_2 ON c_parent.parent = c_parent_2.id
-                LEFT JOIN category c_parent_3 ON c_parent_2.parent = c_parent_3.id
-                LEFT JOIN category c_parent_4 ON c_parent_3.parent = c_parent_4.id
-                LEFT JOIN category_i18n ci18n on category.id = ci18n.id AND ci18n.locale = :locale
-                WHERE category.id = :categoryId OR c_parent.id = :categoryId OR c_parent_2.id = :categoryId OR c_parent_3.id = :categoryId OR c_parent_4.id = :categoryId
-            ");
-            $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
-            $stmt->bindValue(':categoryId', $categoryId, \PDO::PARAM_INT);
-            $stmt->execute();
+            $categoryRows = $this->fetchCategoryFilterRows($locale, (int) $categoryId);
 
-            $categoryResults = array_map(
-                fn ($category) => $modelFactory->buildModel('CategoryChoiceFilter', $category, $locale),
-                $stmt->fetchAll(\PDO::FETCH_ASSOC)
-            );
+            if ([] !== $categoryRows) {
+                $results['categories'] = array_map(
+                    static fn (array $row): array => LegacyChoiceFilterSerializer::categoryToArray($row),
+                    $categoryRows,
+                );
 
-            if (!empty($categoryResults)) {
-                $results['categories'] = $categoryResults;
+                $categoryIds = array_map(
+                    static fn (array $row): int => (int) $row['id'],
+                    $categoryRows,
+                );
             }
-
-            $categoryIds = array_map(
-                fn (CategoryChoiceFilter $categoryChoiceFilter) => $categoryChoiceFilter->getId(),
-                $categoryResults
-            );
         }
 
-        $needBrands = !empty(array_filter($filters, function ($filter) {return $filter['Type'] === "brand";}));
+        $needBrands = [] !== array_filter(
+            $filters,
+            static fn (array $filter): bool => 'brand' === ($filter['Type'] ?? null),
+        );
+
         if ($needBrands) {
-            $con = Propel::getConnection();
-            $stmt = $con->prepare("
-                SELECT DISTINCT brand.id as id, brand.*, bi18n.* FROM brand
-                INNER JOIN product p on brand.id = p.brand_id
-                LEFT JOIN brand_i18n bi18n on brand.id = bi18n.id AND bi18n.locale = :locale
-                INNER JOIN product_category ON p.id = product_category.product_id AND product_category.category_id IN (:categoryIds)
-            ");
-            $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
-            $stmt->bindValue(':categoryIds', implode(",", $categoryIds), \PDO::PARAM_STR);
-            $stmt->execute();
+            $brandRows = $this->fetchBrandFilterRows($locale, $categoryIds);
 
-            $brandResults = array_map(
-                fn ($brand) => $modelFactory->buildModel('BrandChoiceFilter', $brand, $locale),
-                $stmt->fetchAll(\PDO::FETCH_ASSOC)
-            );
-
-            if (!empty($brandResults)) {
-                $results['brands'] = $brandResults;
+            if ([] !== $brandRows) {
+                $results['brands'] = array_map(
+                    static fn (array $row): array => LegacyChoiceFilterSerializer::brandToArray($row),
+                    $brandRows,
+                );
             }
         }
 
-        return OpenApiService::jsonResponse($results);
+        return $this->legacyJson($results);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchCategoryFilterRows(string $locale, int $categoryId): array
+    {
+        $connection = Propel::getConnection();
+        $stmt = $connection->prepare("
+            SELECT category.*, ci18n.title as title FROM category
+            LEFT JOIN category c_parent ON category.parent = c_parent.id
+            LEFT JOIN category c_parent_2 ON c_parent.parent = c_parent_2.id
+            LEFT JOIN category c_parent_3 ON c_parent_2.parent = c_parent_3.id
+            LEFT JOIN category c_parent_4 ON c_parent_3.parent = c_parent_4.id
+            LEFT JOIN category_i18n ci18n on category.id = ci18n.id AND ci18n.locale = :locale
+            WHERE category.id = :categoryId OR c_parent.id = :categoryId OR c_parent_2.id = :categoryId OR c_parent_3.id = :categoryId OR c_parent_4.id = :categoryId
+        ");
+        $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
+        $stmt->bindValue(':categoryId', $categoryId, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param array<int, int> $categoryIds
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchBrandFilterRows(string $locale, array $categoryIds): array
+    {
+        $connection = Propel::getConnection();
+        $stmt = $connection->prepare("
+            SELECT DISTINCT brand.id as id, brand.*, bi18n.* FROM brand
+            INNER JOIN product p on brand.id = p.brand_id
+            LEFT JOIN brand_i18n bi18n on brand.id = bi18n.id AND bi18n.locale = :locale
+            INNER JOIN product_category ON p.id = product_category.product_id AND product_category.category_id IN (:categoryIds)
+        ");
+        $stmt->bindValue(':locale', $locale, \PDO::PARAM_STR);
+        $stmt->bindValue(':categoryIds', implode(',', $categoryIds), \PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    private function legacyJson(mixed $data, int $status = 200): JsonResponse
+    {
+        $response = (new JsonResponse())->setContent(json_encode($data));
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->setStatusCode($status);
+
+        return $response;
     }
 }
