@@ -49,6 +49,11 @@
                 </div>
             {/if}
 
+            <div class="mb-10 {if !$enabled}disabled{/if}">
+                <button type="button" class="btn btn-primary" onclick="setAllVisibility(1)">{intl l="Show all (Yes)"  d="choicefilter.bo.default"}</button>
+                <button type="button" class="btn btn-primary" onclick="setAllVisibility(0)">{intl l="Hide all (No)"  d="choicefilter.bo.default"}</button>
+            </div>
+
             <table class="table table-striped table-condensed table-left-aligned {if !$enabled}disabled{/if}">
                 <thead>
                 <tr>

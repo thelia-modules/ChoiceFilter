@@ -1,11 +1,13 @@
 <script>
     (function($, $module){
         $module.find('table.disabled').find('input, select, button').attr('disabled', true);
+        $module.find('div.disabled').find('button').attr('disabled', true);
 
         $module.on('click', '.js-action-enable', function(event){
             event.preventDefault();
             $(this).parent().remove();
             $module.find('table.disabled').find('input, select, button').attr('disabled', false);
+            $module.find('div.disabled').find('button').attr('disabled', false);
         });
 
         $module.on('submit', 'form', function(event){
@@ -24,4 +26,12 @@
         });
 
     }(jQuery, jQuery('#module-choice-filter')))
+
+    function setAllVisibility(value) {
+        const selects = document.querySelectorAll('select[name^="ChoiceFilter"]');
+
+        selects.forEach(select => {
+            select.value = value.toString();
+        });
+    }
 </script>
