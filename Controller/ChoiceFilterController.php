@@ -15,7 +15,7 @@ class ChoiceFilterController extends BaseAdminController
 {
     public function saveAction(Request $request)
     {
-        $data = $request->get('ChoiceFilter');
+        $data = $request->attributes->get('ChoiceFilter', $request->query->get('ChoiceFilter', $request->request->get('ChoiceFilter')));
 
         if (!empty($data['template_id'])) {
             ChoiceFilterQuery::create()
@@ -70,7 +70,9 @@ class ChoiceFilterController extends BaseAdminController
             $choiceFilter->save();
         }
 
-        $this->getSession()->getFlashBag()->add('choice-filter-success', 'configuration sauvegardée avec succès');
+        if ($request->hasSession()) {
+            $request->getSession()->getFlashBag()->add('choice-filter-success', 'configuration sauvegardée avec succès');
+        }
 
         if ($request->isXmlHttpRequest()) {
             return $this->render(
@@ -86,7 +88,7 @@ class ChoiceFilterController extends BaseAdminController
 
     public function clearAction(Request $request)
     {
-        $data = $request->get('ChoiceFilter');
+        $data = $request->attributes->get('ChoiceFilter', $request->query->get('ChoiceFilter', $request->request->get('ChoiceFilter')));
 
         if (!empty($data['template_id'])) {
             ChoiceFilterQuery::create()
@@ -114,7 +116,9 @@ class ChoiceFilterController extends BaseAdminController
             throw new \Exception("Missing parameter");
         }
 
-        $this->getSession()->getFlashBag()->add('choice-filter-success', 'configuration sauvegardée avec succès');
+        if ($request->hasSession()) {
+            $request->getSession()->getFlashBag()->add('choice-filter-success', 'configuration sauvegardée avec succès');
+        }
 
         if ($request->isXmlHttpRequest()) {
             return $this->render(
