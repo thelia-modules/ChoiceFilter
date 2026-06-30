@@ -132,8 +132,16 @@ class ChoiceFilterHook extends BaseHook
      */
     protected function getEditLocales()
     {
+        $request = $this->requestStack->getCurrentRequest();
+
+        if (null === $request || !$request->hasSession()) {
+            $locale = \Thelia\Model\LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US';
+
+            return [$locale];
+        }
+
         /** @var Session $session */
-        $session = $this->requestStack->getCurrentRequest()->getSession();
+        $session = $request->getSession();
 
         $locale = $session->getAdminEditionLang()->getLocale();
 

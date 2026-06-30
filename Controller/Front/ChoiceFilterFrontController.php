@@ -40,10 +40,14 @@ final class ChoiceFilterFrontController extends BaseFrontController
     #[Route('', name: '_get', methods: ['GET'])]
     public function getChoiceFilters(Request $request): JsonResponse
     {
-        $locale = $request->get('locale', $request->getSession()->getLang()->getLocale());
+        $defaultLocale = $request->hasSession()
+            ? $request->getSession()->getLang()->getLocale()
+            : (\Thelia\Model\LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US');
 
-        $categoryId = $request->get('category_id');
-        $visible = $request->get('visible', true);
+        $locale = $request->attributes->get('locale', $request->query->get('locale', $request->request->get('locale', $defaultLocale)));
+
+        $categoryId = $request->attributes->get('category_id', $request->query->get('category_id', $request->request->get('category_id')));
+        $visible = $request->attributes->get('visible', $request->query->get('visible', $request->request->get('visible', true)));
 
         $features = new ObjectCollection();
         $attributes = new ObjectCollection();
