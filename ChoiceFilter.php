@@ -11,9 +11,7 @@
 
 namespace ChoiceFilter;
 
-use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
-use Thelia\Core\Install\Database;
 use Thelia\Module\BaseModule;
 
 /**
@@ -23,19 +21,6 @@ class ChoiceFilter extends BaseModule
 {
     /** @var string */
     public const DOMAIN_NAME = 'choicefilter';
-
-    public function preActivation(?ConnectionInterface $con = null): bool
-    {
-        if (!$this->getConfigValue('is_initialized', false)) {
-            $database = new Database($con);
-
-            $database->insertSql(null, [__DIR__.'/Config/thelia.sql', __DIR__.'/Config/insert.sql']);
-
-            $this->setConfigValue('is_initialized', true);
-        }
-
-        return true;
-    }
 
     /**
      * Defines how services are loaded in your modules.

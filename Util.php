@@ -2,11 +2,11 @@
 
 namespace ChoiceFilter;
 
-use ChoiceFilter\Model\ChoiceFilterOther;
+use Thelia\Model\ChoiceFilterOther;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Attribute;
 use Thelia\Model\Feature;
-use ChoiceFilter\Model\ChoiceFilter as ModelChoiceFilter;
+use Thelia\Model\ChoiceFilter as ModelChoiceFilter;
 
 class Util
 {
