@@ -53,7 +53,7 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
         );
     }
 
-    public function buildArray()
+    public function buildArray(): array
     {
         $templateId = $this->getTemplateId();
         $categoryId = $this->getCategoryId();
