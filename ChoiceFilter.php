@@ -24,7 +24,7 @@ class ChoiceFilter extends BaseModule
     /** @var string */
     public const DOMAIN_NAME = 'choicefilter';
 
-    public function preActivation(ConnectionInterface $con = null)
+    public function preActivation(?ConnectionInterface $con = null): bool
     {
         if (!$this->getConfigValue('is_initialized', false)) {
             $database = new Database($con);
