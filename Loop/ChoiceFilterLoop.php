@@ -2,9 +2,9 @@
 
 namespace ChoiceFilter\Loop;
 
-use ChoiceFilter\Model\ChoiceFilter;
-use ChoiceFilter\Model\ChoiceFilterOtherQuery;
-use ChoiceFilter\Model\ChoiceFilterQuery;
+use Thelia\Model\ChoiceFilter;
+use Thelia\Model\ChoiceFilterOtherQuery;
+use Thelia\Model\ChoiceFilterQuery;
 use ChoiceFilter\Util;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Core\Template\Element\ArraySearchLoopInterface;
@@ -53,7 +53,7 @@ class ChoiceFilterLoop extends BaseLoop implements ArraySearchLoopInterface
         );
     }
 
-    public function buildArray()
+    public function buildArray(): array
     {
         $templateId = $this->getTemplateId();
         $categoryId = $this->getCategoryId();

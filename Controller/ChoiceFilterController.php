@@ -2,8 +2,8 @@
 
 namespace ChoiceFilter\Controller;
 
-use ChoiceFilter\Model\ChoiceFilter;
-use ChoiceFilter\Model\ChoiceFilterQuery;
+use Thelia\Model\ChoiceFilter;
+use Thelia\Model\ChoiceFilterQuery;
 use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Tools\URL;
